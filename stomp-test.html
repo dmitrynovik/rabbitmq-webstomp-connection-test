@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+  <meta charset="utf-8" />
+  <title>Web STOMP Test</title>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+  <script language="javascript" type="text/javascript">
+
+var wsUri =  "wss://<hostname>/ws";
+
+var user = "<user>";
+var pass = "<pass>";
+
+var vhost = "/";
+  
+var wss = new WebSocket(wsUri);
+var client = Stomp.over(wss);
+
+// RabbitMQ SockJS does not support heartbeats so disable them
+client.heartbeat.outgoing = 0;
+client.heartbeat.incoming = 0;
+
+client.debug = onDebug;
+
+// Make sure the user has limited access rights
+client.connect(user, pass, onConnect, onError, vhost);
+
+function onConnect() {
+  var id = client.subscribe("/exchange/web/chat", function(d) {
+    var node = document.createTextNode(d.body + '\n');
+    document.getElementById('chat').appendChild(node);
+  });
+}
+
+function sendMsg() {
+  var msg = document.getElementById('msg').value;
+  client.send('/exchange/web/chat', { "content-type": "text/plain" }, msg);
+}
+
+function onError(e) {
+  console.log("STOMP ERROR", e);
+}
+
+function onDebug(m) {
+  console.log("STOMP DEBUG", m);
+}
+  </script>
+
+  <h2>WebSocket Test</h2>
+
+  <div id="output"></div>
